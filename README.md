@@ -139,3 +139,7 @@ npm run dev
 **B라인**: B01_FUEL_TANK → B02_CHASSIS_MERGE → B03_MUFFLER  
 **C라인**: C01_FEM → C02_GLASS → C03_SEAT → C04_BUMPER → C05_TIRE  
 **D라인**: D01_WHEEL_ALIGNMENT → D02_HEADLAMP → D03_WATER_LEAK_TEST
+
+
+konva 설치
+npm install konva react-konva

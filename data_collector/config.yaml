@@ -3,37 +3,19 @@ mqtt:
   broker_host: "localhost"
   broker_port: 1883
   topics:
-    # 스테이션별 센서 데이터 (15개 스테이션)
     - "factory/+/telemetry"
     - "factory/+/status" 
-    - "factory/+/quality"
     - "factory/+/sensors"
-    # 스테이션별 로봇 데이터
-    - "factory/+/robots/telemetry"
-    - "factory/+/robots/status"
-    # 디지털 트윈 데이터
-    - "factory/digital_twin/vehicle_tracking"
-    - "factory/digital_twin/production_stats"
-    # 생산라인 관리 데이터
-    - "factory/production_line/status"
-    # 공급망 데이터
-    - "factory/supply_chain/status"
-    # 전체 로봇 요약
-    - "factory/robots/summary"
+    - "factory/+/quality"
   qos: 1
 
 api:
   backend_url: "http://localhost:8080"
   endpoints:
-    iot_data: "/api/iot-data"
-    kpi_data: "/api/kpi/data"
-    vehicle_tracking: "/api/digital-twin/vehicles"
-    robot_data: "/api/robots/data"
-    production_status: "/api/production/status"
-    supply_chain: "/api/supply-chain/status"
+    iot_data: "/api/iot/data"  # 🔧 수정: /api/iot-data → /api/iot/data
+    kpi_data: "/api/kpi/data"  # 🆕 추가: KPI 엔드포인트
     alerts: "/api/alerts"
   timeout: 5
-  retry_count: 3
 
 influxdb:
   url: "http://localhost:8086"
