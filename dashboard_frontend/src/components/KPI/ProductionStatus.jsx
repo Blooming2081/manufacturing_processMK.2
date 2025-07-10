@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import ApexCharts from 'apexcharts'
 
-const ProductionStatus = ({ oee = 61.2 }) => {
+const ProductionStatus = ({ oee = 61.2, oeeComponents = null }) => {
   const chartRef = useRef(null)
 
   useEffect(() => {
@@ -68,10 +68,10 @@ const ProductionStatus = ({ oee = 61.2 }) => {
           y: {
             formatter: function (val, opts) {
               if (opts.seriesIndex === 0) {
-                // 가상의 OEE 구성요소 계산
-                const availability = Math.min(95, oeeValue + Math.random() * 10);
-                const performance = Math.min(95, oeeValue + Math.random() * 15);
-                const quality = Math.min(99, oeeValue + Math.random() * 20);
+                // 실제 API에서 받은 OEE 구성요소 사용
+                const availability = oeeComponents?.availability || 0;
+                const performance = oeeComponents?.performance || 0;
+                const quality = oeeComponents?.quality || 0;
                 
                 return `가동률: ${availability.toFixed(1)}%<br/>성능률: ${performance.toFixed(1)}%<br/>품질률: ${quality.toFixed(1)}%<br/>OEE: ${val.toFixed(1)}%<br/>등급: ${gradeInfo.grade}`;
               }
@@ -114,7 +114,7 @@ const ProductionStatus = ({ oee = 61.2 }) => {
         chartRef.current = null;
       }
     };
-  }, [oee]); // oee 값이 변경될 때마다 차트 업데이트
+  }, [oee, oeeComponents]); // oee 값과 구성요소가 변경될 때마다 차트 업데이트
 
   // OEE 등급 정보
   const getOEEGrade = (value) => {

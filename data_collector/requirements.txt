@@ -1,9 +1,0 @@
-# 기존 의존성
-paho-mqtt==1.6.1
-requests==2.31.0
-PyYAML==6.0.1
-python-dotenv==1.0.0
-
-# 🆕 KPI 계산을 위한 추가 의존성  
-numpy==1.24.3          # 통계 계산
-pandas==2.0.3          # 데이터 처리 (선택사항)

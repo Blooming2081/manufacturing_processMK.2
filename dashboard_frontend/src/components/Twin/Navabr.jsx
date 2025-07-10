@@ -1,8 +1,10 @@
+import React from 'react';
 import ProductionTarget from '../KPI/ProductionTarget';
 import HourlyProduction from '../KPI/HourlyProduction';
 import CycleTime from '../KPI/CycleTime';
+import ProductStatus from './ProductStatus';
 
-const Navbar = () => {  
+const Navbar = ({ selectedProduct }) => {  
   return (
     <div>
       {/* 상단 날씨 카드들 */}
@@ -82,6 +84,9 @@ const Navbar = () => {
         </div>
         <div className="col-6">
           <CycleTime />
+        </div>
+        <div className="col-sm-12">
+          <ProductStatus selectedProduct={selectedProduct} />
         </div>
       </div>
     </div>

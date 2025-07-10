@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import ApexCharts from 'apexcharts'
 
-const FTYStatus = ({ fty = 95.3 }) => {
+const FTYStatus = ({ fty = 95.3, ftyData = null }) => {
   const chartRef = useRef(null)
 
   useEffect(() => {
@@ -68,11 +68,12 @@ const FTYStatus = ({ fty = 95.3 }) => {
           y: {
             formatter: function (val, opts) {
               if (opts.seriesIndex === 0) {
-                const totalProduced = Math.floor(Math.random() * 200) + 800;
-                const goodParts = Math.floor(totalProduced * ftyValue / 100);
-                const defectiveParts = totalProduced - goodParts;
+                // 실제 API에서 받은 FTY 데이터 사용
+                const passedParts = ftyData?.passed || 0;
+                const totalParts = ftyData?.total || 0;
+                const defectiveParts = totalParts - passedParts;
                 
-                return `일발 양품: ${val.toFixed(1)}%<br/>양품 수량: ${goodParts}개<br/>불량 수량: ${defectiveParts}개<br/>등급: ${gradeInfo.grade}`;
+                return `일발 양품: ${val.toFixed(1)}%<br/>양품 수량: ${passedParts}개<br/>불량 수량: ${defectiveParts}개<br/>전체 수량: ${totalParts}개<br/>등급: ${gradeInfo.grade}`;
               }
               return `불량률: ${val.toFixed(1)}%`;
             }
@@ -113,7 +114,7 @@ const FTYStatus = ({ fty = 95.3 }) => {
         chartRef.current = null;
       }
     };
-  }, [fty]); // fty 값이 변경될 때마다 차트 업데이트
+  }, [fty, ftyData]); // fty 값과 데이터가 변경될 때마다 차트 업데이트
 
   // FTY 등급 정보
   const getFTYGrade = (value) => {

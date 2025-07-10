@@ -14,43 +14,29 @@ import com.u1mobis.dashboard_backend.entity.StationStatus;
 @Repository
 public interface StationStatusRepository extends JpaRepository<StationStatus, Long> {
     
-    // 스테이션 ID로 조회
-    Optional<StationStatus> findByStationId(String stationId);
+    // 스테이션별 최신 상태 조회
+    Optional<StationStatus> findTopByStationIdOrderByTimestampDesc(String stationId);
     
-    // 모든 스테이션 상태 조회 (최신 업데이트 순)
-    List<StationStatus> findAllByOrderByLastUpdateDesc();
-    
-    // 특정 상태의 스테이션들 조회
+    // 상태별 스테이션 조회
     List<StationStatus> findByStatus(String status);
     
-    // 알림이 있는 스테이션들 조회
-    @Query("SELECT s FROM StationStatus s WHERE s.alertCount > 0 ORDER BY s.alertCount DESC")
-    List<StationStatus> findStationsWithAlerts();
+    // 특정 시간 이후의 데이터 조회
+    List<StationStatus> findByTimestampAfter(LocalDateTime timestamp);
     
-    // 효율성이 특정 값 이하인 스테이션들
-    @Query("SELECT s FROM StationStatus s WHERE s.efficiency < :threshold ORDER BY s.efficiency ASC")
-    List<StationStatus> findStationsWithLowEfficiency(@Param("threshold") Double threshold);
+    // 스테이션별 시간 범위 데이터 조회
+    List<StationStatus> findByStationIdAndTimestampBetween(
+        String stationId, LocalDateTime start, LocalDateTime end);
     
-    // 온도가 특정 값 이상인 스테이션들
-    @Query("SELECT s FROM StationStatus s WHERE s.temperature > :threshold ORDER BY s.temperature DESC")
-    List<StationStatus> findStationsWithHighTemperature(@Param("threshold") Double threshold);
+    // 모든 스테이션의 최신 상태 조회
+    @Query("SELECT s FROM StationStatus s WHERE s.timestamp = " +
+           "(SELECT MAX(s2.timestamp) FROM StationStatus s2 WHERE s2.stationId = s.stationId)")
+    List<StationStatus> findLatestStatusForAllStations();
     
-    // 최근 업데이트된 스테이션들 (특정 시간 이후)
-    @Query("SELECT s FROM StationStatus s WHERE s.lastUpdate >= :since ORDER BY s.lastUpdate DESC")
-    List<StationStatus> findRecentlyUpdatedStations(@Param("since") LocalDateTime since);
+    // 실행 중인 스테이션 조회
+    @Query("SELECT s FROM StationStatus s WHERE s.status = 'RUNNING' AND s.timestamp >= :since")
+    List<StationStatus> findRunningStations(@Param("since") LocalDateTime since);
     
-    // 프로세스 타입별 스테이션들
-    List<StationStatus> findByProcessType(String processType);
-    
-    // 가동 중인 스테이션 개수
-    @Query("SELECT COUNT(s) FROM StationStatus s WHERE s.status = 'RUNNING'")
-    Long countRunningStations();
-    
-    // 평균 효율성
-    @Query("SELECT AVG(s.efficiency) FROM StationStatus s WHERE s.efficiency IS NOT NULL")
-    Double getAverageEfficiency();
-    
-    // 총 알림 개수
-    @Query("SELECT COALESCE(SUM(s.alertCount), 0) FROM StationStatus s")
-    Long getTotalAlertCount();
+    // 효율성 기준 조회
+    @Query("SELECT s FROM StationStatus s WHERE s.efficiency >= :minEfficiency AND s.timestamp >= :since")
+    List<StationStatus> findEfficientStations(@Param("minEfficiency") Double minEfficiency, @Param("since") LocalDateTime since);
 }

@@ -1,15 +1,19 @@
 package com.u1mobis.dashboard_backend.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "station_status")
@@ -23,38 +27,66 @@ public class StationStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "station_id", nullable = false, unique = true)
+    @Column(name = "station_id", nullable = false, length = 50)
     private String stationId;
     
-    @Column(name = "process_type")
-    private String processType;
+    @Column(name = "station_name", length = 100)
+    private String stationName;
     
-    @Column(name = "status")
-    private String status;
+    @Column(name = "status", length = 50)
+    private String status; // RUNNING, IDLE, ERROR, MAINTENANCE
+    
+    @Column(name = "current_operation", length = 100)
+    private String currentOperation;
+    
+    @Column(name = "cycle_time")
+    private Double cycleTime;
+    
+    @Column(name = "target_cycle_time")
+    private Double targetCycleTime;
+    
+    @Column(name = "production_count")
+    private Integer productionCount;
+    
+    @Column(name = "progress")
+    private Double progress;
     
     @Column(name = "efficiency")
     private Double efficiency;
     
-    @Column(name = "temperature")
-    private Double temperature;
+    @Column(name = "timestamp")
+    private LocalDateTime timestamp;
     
-    @Column(name = "alert_count")
-    private Integer alertCount;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
     
-    @Column(name = "last_update")
-    private LocalDateTime lastUpdate;
-    
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "metrics", columnDefinition = "json")
-    private JsonNode metrics;
-    
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "current_alerts", columnDefinition = "json")
-    private JsonNode currentAlerts;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     
     @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
+    
     @PreUpdate
     protected void onUpdate() {
-        lastUpdate = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    // Helper methods
+    public boolean isRunning() {
+        return "RUNNING".equals(status);
+    }
+    
+    public boolean hasError() {
+        return "ERROR".equals(status);
+    }
+    
+    public boolean isEfficient() {
+        return efficiency != null && efficiency >= 80.0;
     }
 }

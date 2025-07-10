@@ -22,6 +22,13 @@ data-collector/logs/*.log
 *.pyo
 __pycache__/
 
+# Node.js (전역)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
 # React (dashboard-frontend)
 dashboard-frontend/node_modules/
 dashboard-frontend/dist/
@@ -44,6 +51,11 @@ dashboard-frontend/.env.production.local
 Thumbs.db
 *.log
 
+# 임시 파일
+*.tmp
+.tmp
+tmp/
+
 # 보안 관련
 *.key
 *.pem
@@ -53,3 +65,42 @@ secrets/
 # Gradle properties (local environment specific)
 gradle.propertiesvenv/
 gradle.properties
+
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+/node_modules/.*

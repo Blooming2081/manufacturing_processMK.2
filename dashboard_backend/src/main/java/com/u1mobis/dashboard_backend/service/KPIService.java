@@ -2,6 +2,7 @@ package com.u1mobis.dashboard_backend.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,12 +102,44 @@ public class KPIService {
                 .mapToDouble(kpi -> extractDoubleFromJson(kpi.getThroughputData(), "value"))
                 .sum();
             
+            // 평균 사이클 타임 계산 (90초 기준)
+            double avgCycleTime = allStationKPIs.stream()
+                .mapToDouble(kpi -> extractDoubleFromJson(kpi.getCycleTimeData(), "value"))
+                .average()
+                .orElse(90.0);
+            
+            // 시간당 생산량 계산 (3600초 / 평균 사이클 타임)
+            double hourlyRate = avgCycleTime > 0 ? 3600.0 / avgCycleTime : 0.0;
+            
+            // 현재 생산량 (총 처리량 기준)
+            int currentProduction = (int) Math.round(totalThroughput);
+            
+            // 일일 목표 (20대/시간 * 24시간 = 480대)
+            int dailyTarget = 480;
+            
+            // 전체 품질 점수 계산
+            double overallQualityScore = allStationKPIs.stream()
+                .mapToDouble(kpi -> extractDoubleFromJson(kpi.getQualityData(), "value"))
+                .average()
+                .orElse(0.95); // 기본값 95%
+            
+            // Dashboard.jsx가 기대하는 구조로 응답 생성
             return Map.of(
                 "timestamp", LocalDateTime.now().toString(),
-                "factory_oee", Math.round(avgOEE * 100.0) / 100.0,
-                "factory_fty", Math.round(avgFTY * 100.0) / 100.0,
-                "factory_otd", Math.round(avgOTD * 100.0) / 100.0,
-                "factory_throughput", Math.round(totalThroughput * 10.0) / 10.0,
+                "production", Map.of(
+                    "current", currentProduction,
+                    "target", dailyTarget,
+                    "hourlyRate", Math.round(hourlyRate * 10.0) / 10.0,
+                    "cycleTime", Math.round(avgCycleTime * 10.0) / 10.0
+                ),
+                "kpi", Map.of(
+                    "oee", Math.round(avgOEE * 100.0) / 100.0,
+                    "fty", Math.round(avgFTY * 100.0) / 100.0,
+                    "otd", Math.round(avgOTD * 100.0) / 100.0
+                ),
+                "quality", Map.of(
+                    "overallScore", Math.round(overallQualityScore * 10000.0) / 10000.0
+                ),
                 "active_stations", allStationKPIs.size(),
                 "last_updated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
             );
@@ -149,16 +182,15 @@ public class KPIService {
     }
     
     private Map<String, Object> buildKPIResponse(List<KPIData> kpiList) {
-        Map<String, Object> response = new HashMap<>();
-        
         if (kpiList.isEmpty()) {
             return getDefaultKPIData();
         }
         
-        // 각 스테이션별 KPI 데이터
-        Map<String, Object> stationKPIs = new HashMap<>();
+        // Dashboard.jsx가 기대하는 배열 형식으로 스테이션 데이터 생성
+        List<Map<String, Object>> stationArray = new ArrayList<>();
         for (KPIData kpi : kpiList) {
-            stationKPIs.put(kpi.getStationId(), convertKPIToMap(kpi));
+            Map<String, Object> stationData = convertKPIToSimpleMap(kpi);
+            stationArray.add(stationData);
         }
         
         // 전체 요약
@@ -171,16 +203,17 @@ public class KPIService {
             .mapToDouble(kpi -> extractDoubleFromJson(kpi.getFtyData(), "value"))
             .average()
             .orElse(0.0);
-            
-        response.put("stations", stationKPIs);
-        response.put("summary", Map.of(
-            "avg_oee", Math.round(avgOEE * 100.0) / 100.0,
-            "avg_fty", Math.round(avgFTY * 100.0) / 100.0,
-            "total_stations", kpiList.size(),
-            "timestamp", LocalDateTime.now().toString()
-        ));
         
-        return response;
+        // Dashboard.jsx는 stations 배열을 직접 사용하므로 배열을 바로 반환
+        return Map.of(
+            "stations", stationArray,
+            "summary", Map.of(
+                "avg_oee", Math.round(avgOEE * 100.0) / 100.0,
+                "avg_fty", Math.round(avgFTY * 100.0) / 100.0,
+                "total_stations", kpiList.size(),
+                "timestamp", LocalDateTime.now().toString()
+            )
+        );
     }
     
     private Map<String, Object> convertKPIToMap(KPIData kpiData) {
@@ -215,6 +248,25 @@ public class KPIService {
         return result;
     }
     
+    private Map<String, Object> convertKPIToSimpleMap(KPIData kpiData) {
+        Map<String, Object> result = new HashMap<>();
+        
+        result.put("stationId", kpiData.getStationId());
+        result.put("timestamp", kpiData.getTimestamp().toString());
+        result.put("totalCycles", kpiData.getTotalCycles());
+        result.put("runtimeHours", kpiData.getRuntimeHours());
+        
+        // Dashboard.jsx가 기대하는 간단한 숫자 형식으로 KPI 값 추출
+        result.put("oee", extractDoubleFromJson(kpiData.getOeeData(), "value"));
+        result.put("fty", extractDoubleFromJson(kpiData.getFtyData(), "value"));
+        result.put("otd", extractDoubleFromJson(kpiData.getOtdData(), "value"));
+        result.put("qualityScore", extractDoubleFromJson(kpiData.getQualityData(), "value"));
+        result.put("throughput", extractDoubleFromJson(kpiData.getThroughputData(), "value"));
+        result.put("cycleTime", extractDoubleFromJson(kpiData.getCycleTimeData(), "value"));
+        
+        return result;
+    }
+    
     private double extractDoubleFromJson(com.fasterxml.jackson.databind.JsonNode jsonNode, String key) {
         if (jsonNode != null && jsonNode.has(key)) {
             return jsonNode.get(key).asDouble();
@@ -224,9 +276,14 @@ public class KPIService {
     
     private double extractOEEValue(Map<String, Object> rawData) {
         if (rawData.containsKey("oee")) {
-            Map<String, Object> oeeData = (Map<String, Object>) rawData.get("oee");
-            if (oeeData.containsKey("value")) {
-                return ((Number) oeeData.get("value")).doubleValue();
+            Object oeeData = rawData.get("oee");
+            if (oeeData instanceof Number) {
+                return ((Number) oeeData).doubleValue();
+            } else if (oeeData instanceof Map) {
+                Map<String, Object> oeeMap = (Map<String, Object>) oeeData;
+                if (oeeMap.containsKey("value")) {
+                    return ((Number) oeeMap.get("value")).doubleValue();
+                }
             }
         }
         return 0.0;
@@ -243,25 +300,36 @@ public class KPIService {
     
     private Map<String, Object> getDefaultKPIData() {
         return Map.of(
-            "stations", Map.of(),
+            "stations", new ArrayList<>(), // 빈 배열로 수정
             "summary", Map.of(
                 "avg_oee", 0.0,
                 "avg_fty", 0.0,
                 "total_stations", 0,
                 "timestamp", LocalDateTime.now().toString()
             ),
-            "message", "KPI 데이터가 없습니다 (시뮬레이션 모드)"
+            "message", "KPI 데이터가 없습니다 (시뮬렬이션 모드)"
         );
     }
     
     private Map<String, Object> getDefaultFactorySummary() {
         return Map.of(
-            "factory_oee", 0.0,
-            "factory_fty", 0.0,
-            "factory_otd", 0.0,
-            "factory_throughput", 0.0,
-            "active_stations", 0,
             "timestamp", LocalDateTime.now().toString(),
+            "production", Map.of(
+                "current", 0,
+                "target", 480,
+                "hourlyRate", 0.0,
+                "cycleTime", 90.0
+            ),
+            "kpi", Map.of(
+                "oee", 0.0,
+                "fty", 0.0,
+                "otd", 0.0
+            ),
+            "quality", Map.of(
+                "overallScore", 0.0
+            ),
+            "active_stations", 0,
+            "last_updated", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
             "message", "공장 KPI 데이터가 없습니다"
         );
     }

@@ -39,28 +39,17 @@ class DashboardService {
 
   async fetchData() {
     try {
-      // 5초 타임아웃으로 빠른 응답 보장
-      const dashboardPromise = Promise.race([
-        this.getFactorySummary(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('API Timeout')), 5000))
-      ]);
-      
-      const stationsPromise = Promise.race([
-        this.getLatestKPIs(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('API Timeout')), 5000))
-      ]);
-
-      const dashboardData = await dashboardPromise;
+      const dashboardData = await this.getFactorySummary();
       this.notify('dashboard', dashboardData);
       
-      const stationsData = await stationsPromise;
+      const kpiResponse = await this.getLatestKPIs();
+      // 백엔드 응답에서 stations 배열 추출
+      const stationsData = kpiResponse.stations || [];
       this.notify('stations', stationsData);
       
     } catch (error) {
-      console.error('Backend connection failed, using mock data:', error);
-      // 빠른 fallback
-      this.notify('dashboard', this.getMockDashboardData());
-      this.notify('stations', this.getMockStationsData());
+      console.error('Backend connection failed:', error);
+      this.notify('error', error);
     }
   }
 
@@ -88,40 +77,6 @@ class DashboardService {
     return await response.json();
   }
 
-  getMockDashboardData() {
-    return {
-      production: {
-        current: Math.floor(Math.random() * 200) + 650,
-        target: 1000,
-        hourlyRate: Math.floor(Math.random() * 20) + 35,
-        cycleTime: Math.floor(Math.random() * 20) + 45
-      },
-      kpi: {
-        oee: Math.floor(Math.random() * 15) + 80,
-        otd: Math.floor(Math.random() * 10) + 88,
-        fty: Math.floor(Math.random() * 12) + 85
-      },
-      quality: {
-        overallScore: (Math.random() * 0.15 + 0.82)
-      }
-    };
-  }
-
-  getMockStationsData() {
-    const stations = ['A', 'B', 'C', 'D'];
-    return stations.map((station, index) => ({
-      id: index + 1,
-      name: `Station ${station}`,
-      stationId: `ST00${index + 1}`,
-      status: Math.random() > 0.2 ? 'running' : 'maintenance',
-      efficiency: Math.floor(Math.random() * 25) + 75,
-      temperature: Math.floor(Math.random() * 15) + 65,
-      vibration: (Math.random() * 0.5 + 0.1).toFixed(2),
-      oee: Math.floor(Math.random() * 20) + 75,
-      cycleTime: Math.floor(Math.random() * 30) + 45,
-      lastUpdated: new Date().toISOString()
-    }));
-  }
 }
 
 const dashboardService = new DashboardService();

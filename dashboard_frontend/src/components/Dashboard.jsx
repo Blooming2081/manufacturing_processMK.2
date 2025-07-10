@@ -31,6 +31,9 @@ const Dashboard = () => {
         case 'stations':
           setStationsData(data);
           break;
+        case 'error':
+          setConnectionStatus('error');
+          break;
       }
       setLastUpdated(new Date());
       setLoading(false);
@@ -63,7 +66,7 @@ const Dashboard = () => {
     const statusConfig = {
       connecting: { color: 'warning', text: '연결 중...', icon: '⏳' },
       connected: { color: 'success', text: '실시간 연결됨', icon: '🟢' },
-      error: { color: 'danger', text: '연결 오류 (더미 데이터)', icon: '🔴' }
+      error: { color: 'danger', text: '연결 오류', icon: '🔴' }
     };
 
     const config = statusConfig[connectionStatus];
@@ -72,7 +75,7 @@ const Dashboard = () => {
       <div className={`alert alert-${config.color} alert-dismissible fade show`} role="alert">
         {config.icon} {config.text} - 마지막 업데이트: {lastUpdated.toLocaleTimeString()}
         <small className="ms-2">
-          (데이터 소스: {connectionStatus === 'connected' ? 'Spring Boot API' : '시뮬레이션'})
+          (데이터 소스: Spring Boot API)
         </small>
       </div>
     );
@@ -214,7 +217,7 @@ const Dashboard = () => {
                     {connectionStatus === 'connected' ? (
                       <span className="text-success">🟢 Spring Boot API</span>
                     ) : (
-                      <span className="text-warning">🟡 시뮬레이션 모드</span>
+                      <span className="text-danger">🔴 연결 오류</span>
                     )}
                   </div>
                 </div>

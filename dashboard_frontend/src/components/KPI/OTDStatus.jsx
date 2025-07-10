@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import ApexCharts from 'apexcharts'
 
-const OTDStatus = ({ otd = 92.5 }) => {
+const OTDStatus = ({ otd = 92.5, otdData = null }) => {
   const chartRef = useRef(null)
 
   useEffect(() => {
@@ -68,11 +68,11 @@ const OTDStatus = ({ otd = 92.5 }) => {
           y: {
             formatter: function (val, opts) {
               if (opts.seriesIndex === 0) {
-                const totalOrders = Math.floor(Math.random() * 100) + 500;
-                const onTimeOrders = Math.floor(totalOrders * otdValue / 100);
-                const delayedOrders = totalOrders - onTimeOrders;
+                // 실제 API에서 받은 OTD 데이터 사용
+                const avgCycleTime = otdData?.avg_cycle_time || 0;
+                const targetCycleTime = otdData?.target || 180;
                 
-                return `납기 준수: ${val.toFixed(1)}%<br/>정시 납기: ${onTimeOrders}건<br/>지연 납기: ${delayedOrders}건<br/>등급: ${gradeInfo.grade}`;
+                return `납기 준수: ${val.toFixed(1)}%<br/>평균 사이클: ${avgCycleTime}초<br/>목표 사이클: ${targetCycleTime}초<br/>등급: ${gradeInfo.grade}`;
               }
               return `납기 지연: ${val.toFixed(1)}%`;
             }
@@ -113,7 +113,7 @@ const OTDStatus = ({ otd = 92.5 }) => {
         chartRef.current = null;
       }
     };
-  }, [otd]); // otd 값이 변경될 때마다 차트 업데이트
+  }, [otd, otdData]); // otd 값과 데이터가 변경될 때마다 차트 업데이트
 
   // OTD 등급 정보
   const getOTDGrade = (value) => {
