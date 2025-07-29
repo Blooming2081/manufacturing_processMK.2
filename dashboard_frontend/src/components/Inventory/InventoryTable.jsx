@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiService from '../../service/apiService';
 
 const InventoryTable = () => {
   const [inventory, setInventory] = useState([]);
@@ -11,11 +11,9 @@ const InventoryTable = () => {
   useEffect(() => {
     const fetchStockData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/stock', {
-          withCredentials: true,
-        });
+        const response = await apiService.inventory.getStock();
 
-        const mappedData = response.data.map(item => ({
+        const mappedData = response.map(item => ({
           id: item.stockCode,
           name: item.stockName,
           location: item.stockLocation,
@@ -105,27 +103,39 @@ const InventoryTable = () => {
           </tr>
         </thead>
         <tbody>
-          {paginatedInventory.map((item) => (
-            <tr key={item.id}>
-              <th>{item.id}</th>
-              <td>{item.name}</td>
-              <td>{item.location}</td>
-              <td>{item.currentStock}개</td>
-              <td>{item.safetyStock}개</td>
-              <td>{item.consumptionRate}</td>
-              <td>{item.estimatedRunOut}</td>
-              <td>
-                <span className={`status ${getStatusColor(item.status)}`}>
-                  {item.status}
-                </span>
-              </td>
-              <td>
-                <span className={`status ${getSupplyColor(item.lastSupply)}`}>
-                  {item.lastSupply}
-                </span>
+          {paginatedInventory.length > 0 ? (
+            paginatedInventory.map((item) => (
+              <tr key={item.id}>
+                <th>{item.id}</th>
+                <td>{item.name}</td>
+                <td>{item.location}</td>
+                <td>{item.currentStock}개</td>
+                <td>{item.safetyStock}개</td>
+                <td>{item.consumptionRate}</td>
+                <td>{item.estimatedRunOut}</td>
+                <td>
+                  <span className={`status ${getStatusColor(item.status)}`}>
+                    {item.status}
+                  </span>
+                </td>
+                <td>
+                  <span className={`status ${getSupplyColor(item.lastSupply)}`}>
+                    {item.lastSupply}
+                  </span>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="9" className="text-center py-5">
+                <div className="text-muted">
+                  <i className="ti ti-package fs-1 mb-3 d-block"></i>
+                  <h5>등록되어 있는 재고가 없습니다</h5>
+                  <p>현재 시스템에 등록된 재고가 없거나 데이터베이스 연결에 문제가 있습니다.</p>
+                </div>
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 

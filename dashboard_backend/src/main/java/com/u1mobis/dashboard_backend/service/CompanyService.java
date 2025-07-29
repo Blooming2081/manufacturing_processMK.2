@@ -9,8 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -122,6 +124,24 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public boolean existsByCompanyName(String companyName) {
         return companyRepository.existsByCompanyName(companyName);
+    }
+
+    /**
+     * 모든 회사 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<CompanyResponseDTO> getAllCompanies() {
+        List<Company> companies = companyRepository.findAll();
+        
+        return companies.stream()
+                .map(company -> CompanyResponseDTO.builder()
+                        .success(true)
+                        .companyId(company.getCompanyId())
+                        .companyName(company.getCompanyName())
+                        .companyCode(company.getCompanyCode())
+                        .createdAt(company.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**

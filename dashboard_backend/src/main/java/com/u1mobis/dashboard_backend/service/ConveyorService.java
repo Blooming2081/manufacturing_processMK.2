@@ -20,14 +20,19 @@ public class ConveyorService {
     private final ConveyorStatusRepository conveyorStatusRepository;
 
     // 컨베이어 상태 저장 (MQTT에서 호출)
-    public ConveyorStatus saveConveyorStatus(String command, String reason) {
+    public ConveyorStatus saveConveyorStatus(String companyName, Long lineId, String command, String reason) {
+        log.info("컨베이어 상태 저장 시작 - 회사: {}, 라인: {}, 명령: {}, 이유: {}", companyName, lineId, command, reason);
+        
         ConveyorStatus status = ConveyorStatus.builder()
                 .timestamp(LocalDateTime.now())
+                .lineId(lineId)
                 .command(command)
                 .reason(reason)
                 .build();
 
-        return conveyorStatusRepository.save(status);
+        ConveyorStatus saved = conveyorStatusRepository.save(status);
+        log.info("컨베이어 상태 저장 완료");
+        return saved;
     }
 
     // 최신 컨베이어 상태 조회

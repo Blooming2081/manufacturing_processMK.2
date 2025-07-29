@@ -4,16 +4,22 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const getCompanyApiUrl = (endpoint, companyName = null) => {
   // 로그인/회원가입은 회사별 분리 안함
   if (endpoint.startsWith('/user/login') || endpoint.startsWith('/user/register') || endpoint.startsWith('/user/refresh-token') || endpoint.startsWith('/company/')) {
+    console.log(`제외된 경로: ${endpoint}`);
     return `${API_BASE_URL}${endpoint}`;
   }
   
   // URL에서 회사명 추출 또는 localStorage에서 가져오기
   const company = companyName || getCurrentCompanyFromUrl() || getCurrentCompanyFromStorage();
   
+  console.log(`API URL 생성 - endpoint: ${endpoint}, company: ${company}`);
+  
   if (company) {
-    return `${API_BASE_URL}/${company}${endpoint}`;
+    const finalUrl = `${API_BASE_URL}/${company}${endpoint}`;
+    console.log(`최종 URL: ${finalUrl}`);
+    return finalUrl;
   }
   
+  console.log(`회사명 없음 - 기본 URL: ${API_BASE_URL}${endpoint}`);
   return `${API_BASE_URL}${endpoint}`;
 };
 
@@ -360,7 +366,21 @@ export const apiService = {
     register: publicAPI.companyRegister,
     checkCompanyName: publicAPI.checkCompanyName,
     getCompanyByCode: (companyCode) => httpClient.get(`/company/code/${companyCode}`),
-    getCompanyInfo: (companyId) => httpClient.get(`/company/${companyId}`)
+    getCompanyInfo: (companyId) => httpClient.get(`/company/${companyId}`),
+    getAllCompanies: () => {
+      // 회사 목록은 공개 API로 처리 (인증 불필요)
+      return fetch(`${API_BASE_URL}/company/list`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      });
+    }
   }
 };
 

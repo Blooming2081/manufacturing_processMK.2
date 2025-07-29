@@ -247,10 +247,10 @@ const CompanyRegister = () => {
                         background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
                         border: 'none'
                       }}
-                      onClick={() => navigate("/login")}
+                      onClick={() => navigate("/register")}
                     >
                       <i className="ti ti-login me-2"></i>
-                      로그인하러 가기
+                      회원가입하러가기
                     </button>
                   )}
                 </form>
@@ -283,7 +283,7 @@ const CompanyRegister = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         @keyframes float {
           0%, 100% { 
             transform: translateY(0px) rotate(0deg); 

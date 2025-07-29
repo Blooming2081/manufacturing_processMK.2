@@ -100,7 +100,7 @@ const Register = () => {
         localStorage.setItem('isLoggedIn', 'true');
         
         alert('회원가입이 완료되었습니다!');
-        navigate('/dashboard');
+        navigate(`/${response.companyName}/dashboard`);
       } else {
         setError(response.message || '회원가입에 실패했습니다.');
       }
@@ -370,7 +370,7 @@ const Register = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         @keyframes float {
           0%, 100% { 
             transform: translateY(0px) rotate(0deg); 

@@ -64,8 +64,27 @@ public class ProductionService {
         }
     }
     
+    // 생산 시작 처리 (MQTT에서 호출)
+    public CurrentProduction startProduction(String companyName, Long lineId, String productId, Integer targetQuantity, LocalDateTime dueDate) {
+        log.info("생산 시작 처리 - 회사: {}, 라인: {}, 제품: {}", companyName, lineId, productId);
+        
+        CurrentProduction production = CurrentProduction.builder()
+            .productId(productId)
+            .lineId(lineId)
+            .startTime(LocalDateTime.now())
+            .dueDate(dueDate)
+            .status("PROCESSING")
+            .currentStation("START")
+            .reworkCount(0)
+            .build();
+            
+        CurrentProduction saved = currentProductionRepository.save(production);
+        log.info("생산 시작 저장 완료 - 제품: {}", productId);
+        return saved;
+    }
+    
     // 생산 완료 처리 (MQTT에서 호출)
-    public ProductionCompleted completeProduction(String productId, Double cycleTime, String quality, LocalDateTime dueDate) {
+    public ProductionCompleted completeProduction(String companyName, Long lineId, String productId, Double cycleTime, String quality, LocalDateTime dueDate) {
         // 1. 현재 생산 정보 조회
         Optional<CurrentProduction> currentOpt = currentProductionRepository.findById(productId);
         if (currentOpt.isEmpty()) {

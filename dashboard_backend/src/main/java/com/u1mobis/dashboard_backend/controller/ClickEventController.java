@@ -4,13 +4,15 @@ import com.u1mobis.dashboard_backend.service.ClickEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/click")
+@RequestMapping("/api/{companyName}/click")
 @CrossOrigin(originPatterns = {"http://localhost:*", "https://localhost:*"})
+@Slf4j
 public class ClickEventController {
 
     @Autowired

@@ -70,10 +70,6 @@ public class KPIData {
     @Column(name = "line_id", nullable = false)
     private Long lineId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "line_id", insertable = false, updatable = false)
-    private ProductionLine productionLine;
-
     // OEE 필드 추가 (PDF 스키마에 맞춤)
     @Column(name = "oee")
     private Double oee;

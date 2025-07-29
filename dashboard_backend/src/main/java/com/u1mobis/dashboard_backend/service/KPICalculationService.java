@@ -6,7 +6,9 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.u1mobis.dashboard_backend.entity.Company;
 import com.u1mobis.dashboard_backend.entity.KPIData;
+import com.u1mobis.dashboard_backend.repository.CompanyRepository;
 import com.u1mobis.dashboard_backend.repository.CurrentProductionRepository;
 import com.u1mobis.dashboard_backend.repository.KPIDataRepository;
 import com.u1mobis.dashboard_backend.repository.ProductionCompletedRepository;
@@ -22,6 +24,7 @@ public class KPICalculationService {
     private final KPIDataRepository kpiDataRepository;
     private final ProductionCompletedRepository productionCompletedRepository;
     private final CurrentProductionRepository currentProductionRepository;
+    private final CompanyRepository companyRepository;
     
     // 실시간 KPI 조회 (수정됨)
     public Map<String, Object> getRealTimeKPI() {
@@ -60,9 +63,14 @@ public class KPICalculationService {
     }
     
     // KPI 데이터 처리 및 계산
-    public KPIData processKPIData(Integer plannedTime, Integer downtime, Double targetCycleTime, 
+    public KPIData processKPIData(String companyName, Long lineId, Integer plannedTime, Integer downtime, Double targetCycleTime, 
                                   Integer goodCount, Integer totalCount, Integer firstTimePassCount, 
                                   Integer onTimeDeliveryCount) {
+        
+        log.info("KPI 데이터 처리 시작 - 회사: {}, 라인: {}, 파라미터: planned={}, downtime={}, target={}, good={}, total={}, ftp={}, otd={}", 
+                companyName, lineId, plannedTime, downtime, targetCycleTime, goodCount, totalCount, firstTimePassCount, onTimeDeliveryCount);
+        
+        try {
         
         // OEE 계산
         double availability = (plannedTime - downtime) / (double) plannedTime * 100;
@@ -75,6 +83,9 @@ public class KPICalculationService {
         
         // OTD 계산
         double otd = onTimeDeliveryCount / (double) totalCount * 100;
+        
+        // 회사 정보 조회 (Company 엔티티 필요)
+        Company company = getCompanyByName(companyName);
         
         // KPI 데이터 저장
         KPIData kpiData = KPIData.builder()
@@ -89,6 +100,8 @@ public class KPICalculationService {
             .calculatedOEE(oee)
             .calculatedFTY(fty)
             .calculatedOTD(otd)
+            .company(company)
+            .lineId(lineId)
             .build();
             
         KPIData saved = kpiDataRepository.save(kpiData);
@@ -98,5 +111,22 @@ public class KPICalculationService {
                 Math.round(otd * 100) / 100.0);
                 
         return saved;
+        
+        } catch (Exception e) {
+            log.error("KPI 데이터 처리 중 오류 발생 - 회사: {}, 오류: {}", companyName, e.getMessage());
+            log.error("에러 스택 트레이스:", e);
+            throw e;
+        }
+    }
+    
+    // 회사명으로 Company 엔티티 조회
+    private Company getCompanyByName(String companyName) {
+        Optional<Company> company = companyRepository.findByCompanyName(companyName);
+        if (company.isPresent()) {
+            return company.get();
+        } else {
+            log.warn("회사를 찾을 수 없습니다: {}", companyName);
+            throw new RuntimeException("회사를 찾을 수 없습니다: " + companyName);
+        }
     }
 }

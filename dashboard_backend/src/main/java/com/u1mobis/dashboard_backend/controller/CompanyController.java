@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/company")
 @RequiredArgsConstructor
@@ -90,5 +92,16 @@ public class CompanyController {
         
         boolean exists = companyService.existsByCompanyCode(companyCode);
         return ResponseEntity.ok(exists);
+    }
+
+    /**
+     * 모든 회사 목록 조회
+     */
+    @GetMapping("/list")
+    public ResponseEntity<List<CompanyResponseDTO>> getAllCompanies() {
+        log.info("모든 회사 목록 조회 요청");
+        
+        List<CompanyResponseDTO> companies = companyService.getAllCompanies();
+        return ResponseEntity.ok(companies);
     }
 }

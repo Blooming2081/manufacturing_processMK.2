@@ -45,11 +45,27 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/login", "/api/user/register").permitAll()
                 .requestMatchers("/api/user/refresh-token").permitAll()
                 .requestMatchers("/api/company/**").permitAll() // 모든 company 경로 허용
+                // 웹소켓 관련 경로 허용
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/test/**").permitAll() // 테스트 API 허용
                 // 테스트용 API 엔드포인트 허용
                 .requestMatchers("/api/dashboard", "/api/production/status", "/api/kpi/realtime").permitAll()
                 .requestMatchers("/api/environment/**", "/api/stock", "/api/stocks/**").permitAll()
                 .requestMatchers("/api/click/**", "/api/iot/**", "/api/conveyor/**").permitAll()
-                // 정적 리소스 허용
+                // 특정 회사 경로 허용 (u1, DEFAULT 등) - 먼저 명시
+                .requestMatchers("/api/u1/**").permitAll()
+                .requestMatchers("/api/DEFAULT/**").permitAll()
+                // 회사별 API 경로 허용 (패턴 매칭) - 더 구체적으로
+                .requestMatchers("/api/*/dashboard").permitAll()
+                .requestMatchers("/api/*/kpi/**").permitAll()
+                .requestMatchers("/api/*/environment/**").permitAll()
+                .requestMatchers("/api/*/production/**").permitAll()
+                .requestMatchers("/api/*/conveyor/**").permitAll()
+                .requestMatchers("/api/*/stock/**").permitAll()
+                .requestMatchers("/api/*/click/**").permitAll()
+                // 모든 회사별 API 경로 허용 (가장 마지막에)
+                .requestMatchers("/api/*/**").permitAll()
+                // 정적 리소스 허용 (필요시)
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 // 인증이 필요한 정적 경로들
                 .requestMatchers("/api/user/me", "/api/user/logout").authenticated()

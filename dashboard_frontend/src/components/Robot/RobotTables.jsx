@@ -105,21 +105,7 @@ const RobotTable = ({ stationsData = [], lastUpdated }) => {
   // 스테이션 데이터를 로봇 데이터로 변환
   const robots = stationsData.length > 0 
     ? stationsData.map(transformStationToRobot)
-    : [
-        // 기본 더미 데이터 (연결이 안될 때)
-        {
-          id: 'ROB_001',
-          name: '로봇팔#1',
-          location: 'Line-A St-1',
-          status: '대기중',
-          utilization: '0.0%',
-          cycleTime: '18초',
-          alarm: '정상',
-          health: '85점',
-          workCount: '0건',
-          connection: '오프라인'
-        }
-      ];
+    : [];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -156,15 +142,6 @@ const RobotTable = ({ stationsData = [], lastUpdated }) => {
 
   return (
     <div>
-      {/* 실시간 업데이트 정보 */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="text-muted small">
-          💡 실시간 업데이트: {lastUpdated ? lastUpdated.toLocaleTimeString() : '연결 대기 중'}
-        </div>
-        <div className="badge bg-primary">
-          {robots.length}대 로봇 운영 중
-        </div>
-      </div>
 
       <div className="table-responsive">
         <table className="table table-vcenter table-hover">
@@ -181,63 +158,81 @@ const RobotTable = ({ stationsData = [], lastUpdated }) => {
               <th className="text-nowrap">작업량</th>
               <th className="text-nowrap">통신상태</th>
               <th className="text-nowrap">온도</th>
+              <th className="text-nowrap">최근 업데이트</th>
             </tr>
           </thead>
           <tbody>
-            {robots.map((robot) => (
-              <tr key={robot.id}>
-                <th className="text-primary">{robot.id}</th>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <span className="me-2">🤖</span>
-                    <strong>{robot.name}</strong>
+            {robots.length > 0 ? (
+              robots.map((robot) => (
+                <tr key={robot.id}>
+                  <th className="text-primary">{robot.id}</th>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      <span className="me-2">🤖</span>
+                      <strong>{robot.name}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="badge bg-light text-dark">{robot.location}</span>
+                  </td>
+                  <td>
+                    <span className={`badge ${getStatusColor(robot.status)}`}>
+                      {robot.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="fw-bold">{robot.utilization}</div>
+                    <div className="progress mt-1" style={{ height: '4px' }}>
+                      <div 
+                        className="progress-bar bg-primary"
+                        style={{ width: robot.utilization }}
+                      ></div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="fw-bold">{robot.cycleTime}</span>
+                  </td>
+                  <td>
+                    <span className={`badge ${getAlarmColor(robot.alarm)}`}>
+                      {robot.alarm}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`fw-bold ${getHealthColor(robot.health)}`}>
+                      {robot.health}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="fw-bold text-info">{robot.workCount}</span>
+                  </td>
+                  <td>
+                    <span className={`badge ${getConnectionColor(robot.connection)}`}>
+                      {robot.connection}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={robot.temperature > 40 ? 'text-danger' : 'text-success'}>
+                      {robot.temperature}°C
+                    </span>
+                  </td>
+                  <td>
+                    <span className="status status-blue">
+                      {robot.lastUpdate}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="12" className="text-center py-5">
+                  <div className="text-muted">
+                    <i className="ti ti-robot fs-1 mb-3 d-block"></i>
+                    <h5>등록되어 있는 로봇이 없습니다</h5>
+                    <p>현재 시스템에 등록된 로봇이 없거나 데이터베이스 연결에 문제가 있습니다.</p>
                   </div>
-                </td>
-                <td>
-                  <span className="badge bg-light text-dark">{robot.location}</span>
-                </td>
-                <td>
-                  <span className={`badge ${getStatusColor(robot.status)}`}>
-                    {robot.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="fw-bold">{robot.utilization}</div>
-                  <div className="progress mt-1" style={{ height: '4px' }}>
-                    <div 
-                      className="progress-bar bg-primary"
-                      style={{ width: robot.utilization }}
-                    ></div>
-                  </div>
-                </td>
-                <td>
-                  <span className="fw-bold">{robot.cycleTime}</span>
-                </td>
-                <td>
-                  <span className={`badge ${getAlarmColor(robot.alarm)}`}>
-                    {robot.alarm}
-                  </span>
-                </td>
-                <td>
-                  <span className={`fw-bold ${getHealthColor(robot.health)}`}>
-                    {robot.health}
-                  </span>
-                </td>
-                <td>
-                  <span className="fw-bold text-info">{robot.workCount}</span>
-                </td>
-                <td>
-                  <span className={`badge ${getConnectionColor(robot.connection)}`}>
-                    {robot.connection}
-                  </span>
-                </td>
-                <td>
-                  <span className={robot.temperature > 40 ? 'text-danger' : 'text-success'}>
-                    {robot.temperature}°C
-                  </span>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

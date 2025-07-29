@@ -18,6 +18,9 @@ const Login = ({ onLogin }) => {
       const loginResponse = await apiService.user.login({ username, password });
       
       if (loginResponse.success) {
+        console.log('로그인 응답:', loginResponse);
+        console.log('회사명:', loginResponse.companyName);
+        
         localStorage.setItem('accessToken', loginResponse.accessToken);
         localStorage.setItem('refreshToken', loginResponse.refreshToken);
         
@@ -36,8 +39,11 @@ const Login = ({ onLogin }) => {
           }, 1000);
         }
         
+        const redirectUrl = `/${loginResponse.companyName}/dashboard`;
+        console.log('리다이렉트 URL:', redirectUrl);
+        
         onLogin(userData);
-        navigate(`/${loginResponse.companyName}/dashboard`);
+        navigate(redirectUrl);
       } else {
         setError("잘못된 사용자명 또는 비밀번호입니다.");
       }
@@ -196,7 +202,7 @@ const Login = ({ onLogin }) => {
                         navigate("/company-register"); 
                       }}
                     >
-                      회사 등록
+                      회사등록
                     </a>
                   </div>
                 </div>
@@ -207,7 +213,7 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         @keyframes float {
           0%, 100% { 
             transform: translateY(0px) rotate(0deg); 

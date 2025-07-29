@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,17 +20,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/{companyName}")
 @RequiredArgsConstructor
 @Slf4j
 public class DashboardController {
 
     private final ProductionService productionService;
     private final KPICalculationService kpiCalculationService;
+    private final EnvironmentService environmentService;
 
     // 대시보드 메인 데이터
     @GetMapping("/dashboard")
-    public ResponseEntity<Map<String, Object>> getDashboardData() {
+    public ResponseEntity<Map<String, Object>> getDashboardData(@PathVariable String companyName) {
+        log.info("대시보드 데이터 요청 - 회사: {}", companyName);
         Map<String, Object> dashboard = new HashMap<>();
 
         // 생산 현황
@@ -43,13 +46,15 @@ public class DashboardController {
 
     // 실시간 KPI 조회
     @GetMapping("/kpi/realtime")
-    public ResponseEntity<Map<String, Object>> getRealTimeKPI() {
+    public ResponseEntity<Map<String, Object>> getRealTimeKPI(@PathVariable String companyName) {
+        log.info("실시간 KPI 요청 - 회사: {}", companyName);
         return ResponseEntity.ok(kpiCalculationService.getRealTimeKPI());
     }
 
     // 생산 현황 조회
     @GetMapping("/production/status")
-    public ResponseEntity<Map<String, Object>> getProductionStatus() {
+    public ResponseEntity<Map<String, Object>> getProductionStatus(@PathVariable String companyName) {
+        log.info("생산 현황 요청 - 회사: {}", companyName);
         return ResponseEntity.ok(productionService.getCurrentProductionStatus());
     }
 
@@ -57,9 +62,10 @@ public class DashboardController {
      * KPI 데이터 처리 (테스트용) - 타입 안전 처리
      */
     @PostMapping("/kpi/process")
-    public ResponseEntity<Map<String, Object>> processKPIData(@RequestBody Map<String, Object> kpiData) {
+    public ResponseEntity<Map<String, Object>> processKPIData(@PathVariable String companyName, @RequestBody Map<String, Object> kpiData) {
+        log.info("KPI 데이터 처리 요청 - 회사: {}", companyName);
         try {
-            log.info("KPI 데이터 수신: {}", kpiData);
+            log.info("KPI 데이터 수신 - 회사: {}, 데이터: {}", companyName, kpiData);
 
             // 안전한 타입 변환
             Integer plannedTime = convertToInteger(kpiData.get("planned_time"));
@@ -71,7 +77,7 @@ public class DashboardController {
             Integer onTimeDeliveryCount = convertToInteger(kpiData.get("on_time_delivery_count"));
 
             KPIData result = kpiCalculationService.processKPIData(
-                    plannedTime, downtime, targetCycleTime,
+                    companyName, 1L, plannedTime, downtime, targetCycleTime,
                     goodCount, totalCount, firstTimePassCount, onTimeDeliveryCount);
 
             return ResponseEntity.ok(Map.of(
@@ -109,4 +115,7 @@ public class DashboardController {
             return ((Number) value).doubleValue();
         return Double.parseDouble(value.toString());
     }
+
+
+
 }

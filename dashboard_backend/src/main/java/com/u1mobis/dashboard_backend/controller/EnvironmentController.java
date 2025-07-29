@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/api/environment")
+@RequestMapping("/api/{companyName}/environment")
 @RequiredArgsConstructor
 @Slf4j
 public class EnvironmentController {
@@ -27,7 +28,8 @@ public class EnvironmentController {
      * 현재 환경 데이터 조회 (리액트용)
      */
     @GetMapping("/current")
-    public ResponseEntity<Map<String, Object>> getCurrentEnvironment() {
+    public ResponseEntity<Map<String, Object>> getCurrentEnvironment(@PathVariable String companyName) {
+        log.info("환경 데이터 요청 - 회사: {}", companyName);
         try {
             Map<String, Object> environmentData = environmentService.getCurrentEnvironment();
             return ResponseEntity.ok(environmentData);
@@ -44,7 +46,8 @@ public class EnvironmentController {
      * 환경 데이터 입력 (테스트용)
      */
     @PostMapping("/input")
-    public ResponseEntity<Map<String, Object>> inputEnvironmentData(@RequestBody Map<String, Object> envData) {
+    public ResponseEntity<Map<String, Object>> inputEnvironmentData(@PathVariable String companyName, @RequestBody Map<String, Object> envData) {
+        log.info("환경 데이터 입력 요청 - 회사: {}", companyName);
         try {
             log.info("환경 데이터 수신: {}", envData);
 

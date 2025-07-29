@@ -7,7 +7,9 @@ import HourlyProduction from './KPI/HourlyProduction';
 import CycleTime from './KPI/CycleTime';
 import RobotTables from './Robot/RobotTables';
 import InventoryStatus from './Inventory/InventoryTable';
+import AlertToast from './Alert/AlertToast';
 import apiService from '../service/apiService';
+import useWebSocket from '../hooks/useWebSocket';
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -15,6 +17,76 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+
+  // 사용자 정보 가져오기 (localStorage에서)
+  const [userInfo, setUserInfo] = useState(null);
+  const [companyInfo, setCompanyInfo] = useState(null);
+
+  // 현재 로그인된 사용자 정보 로드
+  useEffect(() => {
+    const loadUserInfo = () => {
+      try {
+        // localStorage에서 실제 로그인된 사용자 정보 가져오기
+        const storedUserData = localStorage.getItem('userData');
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        
+        if (isLoggedIn === 'true' && storedUserData) {
+          const userData = JSON.parse(storedUserData);
+          console.log('저장된 사용자 데이터:', userData);
+          
+          setCompanyInfo({
+            companyName: userData.companyName,
+            companyId: userData.companyId
+          });
+          setUserInfo({
+            userId: userData.userId,
+            userName: userData.userName
+          });
+        } else {
+          // 로그인되지 않은 경우 기본값 사용
+          const defaultCompany = { companyName: '유원대학교' };
+          const defaultUser = { userId: 'testuser', userName: '테스트사용자' };
+          
+          setCompanyInfo(defaultCompany);
+          setUserInfo(defaultUser);
+        }
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+        // 에러 시 기본값 사용
+        const defaultCompany = { companyName: '유원대학교' };
+        const defaultUser = { userId: 'testuser', userName: '테스트사용자' };
+        
+        setCompanyInfo(defaultCompany);
+        setUserInfo(defaultUser);
+      }
+    };
+
+    loadUserInfo();
+  }, []);
+
+  // WebSocket 연결 및 알림 관리
+  const { alerts, removeAlert, realtimeData } = useWebSocket(
+    companyInfo?.companyName || '유원대학교', 
+    userInfo?.userId || 'anonymous'
+  );
+
+  // 실시간 데이터 처리
+  useEffect(() => {
+    if (realtimeData) {
+      console.log('실시간 데이터 수신:', realtimeData);
+      
+      // 데이터 타입에 따라 처리
+      if (realtimeData.type === 'environment_update') {
+        console.log('환경 데이터 업데이트:', realtimeData.data);
+        setLastUpdated(new Date());
+        // 환경 데이터 업데이트 로직 추가 가능
+      } else if (realtimeData.type === 'kpi_update') {
+        console.log('KPI 데이터 업데이트:', realtimeData.data);
+        setLastUpdated(new Date());
+        // KPI 데이터 업데이트 로직 추가 가능
+      }
+    }
+  }, [realtimeData]);
 
   useEffect(() => {
     let mounted = true;
@@ -29,10 +101,10 @@ const Dashboard = () => {
         
         // 병렬로 모든 데이터 가져오기
         const [dashboardData, kpiData, environmentData, conveyorData] = await Promise.all([
-          apiService.getDashboardData(),
-          apiService.getRealTimeKPI(),
-          apiService.getCurrentEnvironment(),
-          apiService.getConveyorStatus()
+          apiService.dashboard.getData(),
+          apiService.dashboard.getRealTimeKPI(),
+          apiService.environment.getCurrent(),
+          apiService.production.getConveyorStatus()
         ]);
 
         if (mounted) {
@@ -192,9 +264,9 @@ const Dashboard = () => {
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h3 className="card-title mb-0">실시간 스테이션 모니터링</h3>
-                <span className="badge bg-primary">
-                  {stationsData.length}개 스테이션 운영 중
-                </span>
+                <div className="text-muted small">
+                  마지막 업데이트: {lastUpdated ? lastUpdated.toLocaleTimeString() : '연결 대기 중'}
+                </div>
               </div>
               <RobotTables 
                 stationsData={stationsData}
@@ -257,6 +329,9 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* 알림 토스트 */}
+      <AlertToast alerts={alerts} onRemove={removeAlert} />
     </div>
   );
 };
