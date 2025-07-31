@@ -1,3 +1,4 @@
+
 package com.u1mobis.dashboard_backend.controller;
 
 import java.util.ArrayList;
@@ -9,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -148,26 +147,14 @@ public class UnityLegacyController {
             Company company = companyRepository.findByCompanyName(companyName)
                 .orElseThrow(() -> new RuntimeException("회사를 찾을 수 없습니다: " + companyName));
             
-            if (company == null) {
-                throw new RuntimeException("회사 조회 결과가 null입니다: " + companyName);
-            }
-            
             // 2. 해당 회사의 생산 라인 조회
             List<ProductionLine> companyLines = productionLineRepository.findByCompanyAndIsActiveTrue(company);
-            if (companyLines == null) {
-                log.warn("회사의 생산 라인 조회 결과가 null입니다: {}", companyName);
-                companyLines = new ArrayList<>();
-            }
             List<Long> lineIds = companyLines.stream().map(ProductionLine::getLineId).toList();
             
             log.info("회사: {}, 활성 라인 수: {}, 라인 IDs: {}", companyName, lineIds.size(), lineIds);
             
             // 3. 전체 생산 현황 데이터 조회
             Map<String, Object> productionStatus = productionService.getCurrentProductionStatus();
-            if (productionStatus == null) {
-                log.warn("생산 현황 데이터 조회 결과가 null입니다");
-                productionStatus = new HashMap<>();
-            }
             @SuppressWarnings("unchecked")
             List<CurrentProduction> allProducts = (List<CurrentProduction>) productionStatus.get("processing_products");
             
@@ -279,38 +266,6 @@ public class UnityLegacyController {
             emptyData.put("error", "데이터 조회 실패: " + e.getMessage());
             
             return ResponseEntity.ok(emptyData);
-        }
-    }
-    
-    /**
-     * Unity WebGL에서 호출하는 클릭 상호작용 기록 (Legacy) - 인증 없음
-     */
-    @PostMapping("/interaction/click")
-    public ResponseEntity<Map<String, Object>> recordInteraction(@RequestBody Map<String, Object> interactionData) {
-        try {
-            log.info("Unity 클릭 상호작용 기록: {}", interactionData);
-            
-            // 클릭 데이터 로깅 (실제로는 DB에 저장 가능)
-            String objectId = (String) interactionData.get("objectId");
-            String objectType = (String) interactionData.get("objectType");
-            String interactionType = (String) interactionData.get("interactionType");
-            
-            log.info("클릭 기록 - Object: {}, Type: {}, Interaction: {}", objectId, objectType, interactionType);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "상호작용이 기록되었습니다",
-                "timestamp", System.currentTimeMillis()
-            ));
-            
-        } catch (Exception e) {
-            log.error("Unity 클릭 상호작용 기록 실패: {}", e.getMessage(), e);
-            return ResponseEntity.ok(Map.of(
-                "success", false,
-                "message", "상호작용 기록 실패",
-                "error", e.getMessage(),
-                "timestamp", System.currentTimeMillis()
-            ));
         }
     }
     

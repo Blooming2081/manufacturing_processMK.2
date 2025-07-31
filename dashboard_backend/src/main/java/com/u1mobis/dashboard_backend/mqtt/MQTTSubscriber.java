@@ -54,6 +54,7 @@ public class MQTTSubscriber {
             // 토픽 구독
             mqttClient.subscribe("factory/+/environment");
             mqttClient.subscribe("factory/+/+/operations");
+            mqttClient.subscribe("factory/+/+/production/started");    // 생산 시작 추가
             mqttClient.subscribe("factory/+/+/production/completed");
             mqttClient.subscribe("factory/+/+/conveyor");
             mqttClient.subscribe("factory/+/robot");

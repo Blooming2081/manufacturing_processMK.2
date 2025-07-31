@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.u1mobis.dashboard_backend.entity.Company;
+import com.u1mobis.dashboard_backend.repository.CompanyRepository;
 import com.u1mobis.dashboard_backend.service.ConveyorService;
 import com.u1mobis.dashboard_backend.service.EnvironmentService;
 import com.u1mobis.dashboard_backend.service.KPICalculationService;
@@ -24,6 +26,7 @@ public class MQTTMessageProcessor {
     private final KPICalculationService kpiCalculationService;
     private final EnvironmentService environmentService;
     private final ConveyorService conveyorService;
+    private final CompanyRepository companyRepository;
     
     // MQTT 메시지 처리 (가상의 메서드 - 실제로는 MQTT 라이브러리 사용)
     public void processMQTTMessage(String topic, String payload) {
@@ -156,36 +159,21 @@ public class MQTTMessageProcessor {
     }
     
     /**
-     * 회사 코드로 회사명 조회
+     * 회사 코드로 회사명 조회 (동적 처리)
      */
     private String getCompanyNameByCode(String companyCode) {
         try {
-            // Company 엔티티에서 companyCode로 조회 후 companyName 반환
-            // 실제 구현에서는 CompanyRepository 또는 CompanyService 사용
-            // 현재는 간단히 매핑 처리
-            Map<String, String> companyMapping = Map.of(
-                "fdyeaqhl", "clear",  // 현재 사용자의 companyCode → companyName 매핑
-                "znemtjru", "zlddjkfdlslf",
-                "qbqke0e", "유원대학교", 
-                "cbdf20dx", "ms",
-                "kyoehb4c", "hi",
-                "jqjmupjv", "Test2",
-                "l2lqleix", "u1",
-                "g2qj6jvf", "u1mobis"
-            );
-            
-            String companyName = companyMapping.get(companyCode.toLowerCase());
-            if (companyName != null) {
-                log.info("회사 코드 '{}' → 회사명 '{}'", companyCode, companyName);
-                return companyName;
-            } else {
-                log.warn("등록되지 않은 회사 코드: {}", companyCode);
-                return companyCode;  // 매핑이 없으면 코드 그대로 사용
-            }
+            // 데이터베이스에서 회사 코드로 조회
+            return companyRepository.findByCompanyCode(companyCode)
+                .map(Company::getCompanyName)
+                .orElseGet(() -> {
+                    log.warn("등록되지 않은 회사 코드: {}, 코드를 회사명으로 사용", companyCode);
+                    return companyCode;  // 매핑이 없으면 코드 그대로 사용
+                });
             
         } catch (Exception e) {
-            log.error("회사명 조회 실패 - 코드: {}", companyCode, e);
-            return companyCode;
+            log.error("회사명 조회 실패 - 코드: {}, 코드를 회사명으로 사용", companyCode, e);
+            return companyCode;  // 오류 시 코드 그대로 사용
         }
     }
 

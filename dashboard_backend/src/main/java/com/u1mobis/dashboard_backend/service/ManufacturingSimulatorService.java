@@ -323,13 +323,25 @@ public class ManufacturingSimulatorService {
                     .build();
                 productDetailRepository.save(detail);
                 
-                // 3. MQTT로 생산 시작 및 제품 상세 정보 발송
+                // 3. MQTT로 생산 시작 및 제품 상세 정보 발송 (올바른 토픽 패턴 사용)
                 if (state.companyCode != null) {
                     mqttPublisher.publishProductionStarted(state.companyCode, lineId, productId, 
                         production.getTargetQuantity(), production.getDueDate().toString());
                     
                     mqttPublisher.publishProductDetails(state.companyCode, lineId, productId, 
-                        production.getProductColor(), doorColor, workProgress, positionX, positionZ); // Y를 Z로 변경
+                        production.getProductColor(), doorColor, workProgress, positionX, positionZ);
+                        
+                    // KPI 운영 데이터도 주기적으로 발송
+                    Random random = new Random();
+                    mqttPublisher.publishOperationsData(state.companyCode, lineId, 
+                        480, // 8시간 = 480분
+                        random.nextInt(30), // 0-30분 다운타임
+                        120.0, // 목표 사이클 타임 120초
+                        1, // 양품 1개
+                        1, // 총 1개
+                        1, // 일회 통과 1개
+                        1  // 정시 납기 1개
+                    );
                 }
                 
                 log.debug("새 제품 생성 완료 - 제품 ID: {}, 라인: {}", productId, lineId);
@@ -485,6 +497,12 @@ public class ManufacturingSimulatorService {
                 conveyor.updateSensorStatus(state.random.nextDouble() < 0.4);  // 40% 확률로 감지
                 
                 conveyorControlRepository.save(conveyor);
+                
+                // MQTT로 컨베이어 상태 발송
+                if (state.companyCode != null) {
+                    mqttPublisher.publishConveyorData(state.companyCode, state.lineId,
+                        conveyor.getCommand(), "자동 운영");
+                }
             }
             
         } catch (Exception e) {
@@ -533,6 +551,12 @@ public class ManufacturingSimulatorService {
                             
                             productionService.completeProduction(companyName, state.lineId, 
                                 product.getProductId(), cycleTime, quality, product.getDueDate());
+                            
+                            // MQTT로 생산 완료 알림 발송
+                            if (state.companyCode != null) {
+                                mqttPublisher.publishProductionCompleted(state.companyCode, state.lineId, 
+                                    product.getProductId(), cycleTime, quality, product.getDueDate().toString());
+                            }
                             
                             // ProductDetail 진행률 100% 완료
                             ProductDetail detail = detailOpt.get();
